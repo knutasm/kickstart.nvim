@@ -219,7 +219,28 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
-vim.keymap.set('n', '<leader>o', ':Neotree  toggle<cr>', { desc = 'Toggle neo-tree' })
+-- Toggle focus between the neo-tree sidebar and the file you were editing.
+-- The sidebar is opened if it is not visible, and is left open on the way back.
+vim.keymap.set('n', '<leader>o', function()
+  if vim.bo.filetype ~= 'neo-tree' then
+    vim.cmd 'Neotree focus'
+    return
+  end
+
+  -- Prefer the window we came from, if it is still a real editing window.
+  local prev = vim.fn.win_getid(vim.fn.winnr '#')
+  if prev ~= 0 and vim.api.nvim_win_is_valid(prev) and vim.bo[vim.api.nvim_win_get_buf(prev)].filetype ~= 'neo-tree' then
+    vim.api.nvim_set_current_win(prev)
+    return
+  end
+
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= 'neo-tree' then
+      vim.api.nvim_set_current_win(win)
+      return
+    end
+  end
+end, { desc = 'Toggle focus: neo-tree / buffer' })
 vim.keymap.set('n', '<leader>Q', ':qa<CR>', { desc = 'Quit Neovim' })
 
 -- [[ Basic Autocommands ]]
