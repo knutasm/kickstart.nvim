@@ -706,9 +706,10 @@ require('lazy').setup({
       -- other tools, you can run
       --    :Mason
       -- You can press `g?` for help in this menu.
-      local ensure_installed = vim.tbl_filter(function(name) return name ~= 'basedpyright' end, vim.tbl_keys(servers or {}))
+      local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        -- You can add other tools here that you want Mason to install
+        -- Python formatters are installed via `uv tool install black isort`
+        -- (Mason cannot install them: pip is externally-managed on this system)
       })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -753,7 +754,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort', 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
