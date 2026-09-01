@@ -164,6 +164,12 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Tabulation
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
+vim.opt.expandtab = false
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
