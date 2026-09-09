@@ -225,17 +225,19 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
--- Toggle focus between the neo-tree sidebar and the file you were editing.
--- The sidebar is opened if it is not visible, and is left open on the way back.
-vim.keymap.set('n', '<leader>o', function()
-  if vim.bo.filetype ~= 'neo-tree' then
-    vim.cmd 'Neotree focus'
-    return
+-- Returns the neo-tree window in this tabpage, or nil when the sidebar is hidden.
+local function neo_tree_win()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == 'neo-tree' then
+      return win
+    end
   end
+end
 
-  -- Prefer the window we came from, if it is still a real editing window.
-  local prev = vim.fn.win_getid(vim.fn.winnr '#')
-  if prev ~= 0 and vim.api.nvim_win_is_valid(prev) and vim.bo[vim.api.nvim_win_get_buf(prev)].filetype ~= 'neo-tree' then
+-- Moves the cursor to a real editing window: the one we came from when it is
+-- still valid, otherwise the first non-neo-tree window in the tabpage.
+local function focus_editor_win(prev)
+  if prev and prev ~= 0 and vim.api.nvim_win_is_valid(prev) and vim.bo[vim.api.nvim_win_get_buf(prev)].filetype ~= 'neo-tree' then
     vim.api.nvim_set_current_win(prev)
     return
   end
@@ -246,7 +248,38 @@ vim.keymap.set('n', '<leader>o', function()
       return
     end
   end
+end
+
+-- Toggle focus between the neo-tree sidebar and the file you were editing.
+-- The sidebar is opened if it is not visible, and is left open on the way back.
+vim.keymap.set('n', '<leader>o', function()
+  if vim.bo.filetype ~= 'neo-tree' then
+    vim.cmd 'Neotree focus'
+    return
+  end
+
+  -- Prefer the window we came from, if it is still a real editing window.
+  focus_editor_win(vim.fn.win_getid(vim.fn.winnr '#'))
 end, { desc = 'Toggle focus: neo-tree / buffer' })
+
+-- Toggle the neo-tree sidebar. From a file buffer it opens and reveals the
+-- current file, or hides the sidebar when it is already visible. From inside
+-- the tree it closes the sidebar and returns to the window we came from.
+vim.keymap.set('n', '<leader>e', function()
+  if vim.bo.filetype == 'neo-tree' then
+    -- Capture the origin window first: closing the tree rewrites `winnr('#')`.
+    local prev = vim.fn.win_getid(vim.fn.winnr '#')
+    vim.cmd 'Neotree close'
+    focus_editor_win(prev)
+    return
+  end
+
+  if neo_tree_win() then
+    vim.cmd 'Neotree close'
+  else
+    vim.cmd 'Neotree reveal'
+  end
+end, { desc = 'Toggle neo-tree explorer' })
 vim.keymap.set('n', '<leader>Q', ':qa<CR>', { desc = 'Quit Neovim' })
 
 -- [[ Basic Autocommands ]]
